@@ -9,7 +9,7 @@ const getRecommendedTruckType = (totalBlocks) => {
 };
 
 const createQuote = async (req, res) => {
-  const { customer_name, truck_id, loads } = req.body; // loads is optional array of {description, blocks}
+  const { customer_name, truck_id, loads, origin, destination, distance } = req.body; // loads is optional array of {description, blocks}
 
   const trx = await db.transaction();
 
@@ -31,7 +31,7 @@ const createQuote = async (req, res) => {
     }
 
     const [newQuote] = await trx('quotes')
-      .insert({ customer_name, truck_id })
+      .insert({ user_id: req.user.id, customer_name, truck_id, origin, destination, distance, total_blocks: totalBlocks, status: 'Reservado' })
       .returning('*');
 
     if (loads && Array.isArray(loads)) {
@@ -87,7 +87,7 @@ const getQuote = async (req, res) => {
 
 const updateQuote = async (req, res) => {
   const { id } = req.params;
-  const { customer_name, truck_id } = req.body;
+  const { customer_name, truck_id, origin, destination, distance, status } = req.body;
 
   try {
     // If updating truck_id, validate capacity against existing loads
@@ -105,7 +105,7 @@ const updateQuote = async (req, res) => {
 
     const [updatedQuote] = await db('quotes')
       .where({ id })
-      .update({ customer_name, truck_id })
+      .update({ customer_name, truck_id, origin, destination, distance, status })
       .returning('*');
 
     if (!updatedQuote) return res.status(404).json({ error: 'Cotización no encontrada.' });
@@ -180,11 +180,24 @@ const deleteLoad = async (req, res) => {
   }
 };
 
+const listForUser = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'No autenticado' });
+    const quotes = await db('quotes').where({ user_id: userId }).orderBy('created_at', 'desc');
+    res.json(quotes);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al listar cotizaciones.' });
+  }
+};
+
 module.exports = {
   createQuote,
   getQuote,
   updateQuote,
   deleteQuote,
   addLoad,
-  deleteLoad
+  deleteLoad,
+  listForUser
 };

@@ -7,6 +7,7 @@ const { validateLoad } = require('../middlewares/validationMiddleware');
 router.use(authMiddleware);
 
 // Quotes CRUD
+router.get('/', quotesController.listForUser);
 router.post('/', quotesController.createQuote);
 router.get('/:id', quotesController.getQuote);
 router.put('/:id', quotesController.updateQuote);

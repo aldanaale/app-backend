@@ -1,0 +1,42 @@
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL,
+  password TEXT NOT NULL,
+  name TEXT,
+  role TEXT CHECK (role IN ('cliente','usuario')) DEFAULT 'usuario',
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS trucks (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  type TEXT NOT NULL,
+  capacity INTEGER NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS quotes (
+  id SERIAL PRIMARY KEY,
+  customer_name TEXT NOT NULL,
+  truck_id INTEGER REFERENCES trucks(id) ON DELETE SET NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS loads (
+  id SERIAL PRIMARY KEY,
+  quote_id INTEGER REFERENCES quotes(id) ON DELETE CASCADE,
+  description TEXT NOT NULL,
+  blocks INTEGER NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS uploads (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  filename TEXT NOT NULL,
+  stored_name TEXT NOT NULL,
+  path TEXT NOT NULL,
+  mime TEXT NOT NULL,
+  size INTEGER NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);

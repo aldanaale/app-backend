@@ -1,11 +1,11 @@
-require('dotenv').config();
+require("dotenv").config();
 
-const knex = require('knex');
+const knex = require("knex");
 
 const db = knex({
-  client: 'pg',
+  client: "pg",
   connection: process.env.DATABASE_URL,
-  pool: { min: 2, max: 10 } // Optional: connection pool settings
+  pool: { min: 2, max: 10 }, // Optional: connection pool settings
 });
 
 module.exports = db;

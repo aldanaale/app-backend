@@ -18,12 +18,17 @@
     "test:quotes": "node scripts/testQuotes.js",
     "test:rbac": "node scripts/testRBAC.js",
     "test:admin": "node scripts/testAdmin.js",
+    "test:uploads": "node scripts/testUploads.js",
     "test:refresh-revoke": "node scripts/testRefreshRevocation.js",
     "lint": "eslint .",
     "format": "prettier --check .",
     "format:write": "prettier --write .",
     "test:all": "npm run test:auth && npm run test:trucks && npm run test:quotes && npm run test:rbac && npm run test:admin && npm run test:refresh-revoke",
-    "cleanup:refresh": "node scripts/cleanupRefreshTokens.js"
+    "cleanup:refresh": "node scripts/cleanupRefreshTokens.js",
+    "sample:excel": "node scripts/generateSampleInventory.js"
+    ,
+    "cleanup:testusers": "node scripts/cleanupTestUsers.js",
+    "admin:make": "node scripts/makeAdmin.js"
   },
   "keywords": [],
   "author": "",
@@ -31,14 +36,16 @@
   "type": "commonjs",
   "dependencies": {
     "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "form-data": "^4.0.0",
     "jsonwebtoken": "^9.0.3",
     "knex": "^3.1.0",
-    "pg": "^8.17.2",
-    "cors": "^2.8.5",
     "multer": "^1.4.5-lts.1",
-    "node-fetch": "^3.3.2"
+    "node-fetch": "^3.3.2",
+    "pg": "^8.17.2",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "eslint": "^9.39.2",

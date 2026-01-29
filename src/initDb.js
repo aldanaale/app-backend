@@ -117,6 +117,10 @@ async function ensureSchema() {
       { name: "mimetype", type: (t) => t.string("mimetype") },
       { name: "size", type: (t) => t.integer("size") },
       { name: "created_at", type: (t) => t.timestamp("created_at").defaultTo(db.fn.now()) },
+      { name: "ai_status", type: (t) => t.string("ai_status") },
+      { name: "ai_tags", type: (t) => t.json("ai_tags") },
+      { name: "ai_summary", type: (t) => t.text("ai_summary") },
+      { name: "ai_flags", type: (t) => t.json("ai_flags") },
     ];
     for (const col of uploadCols) {
       const hasCol = await db.schema.hasColumn("uploads", col.name);

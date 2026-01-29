@@ -58,7 +58,9 @@ app.use(
         const isLocalHost =
           u.hostname === "localhost" || u.hostname === "127.0.0.1";
         const isLanDev = !isProd && u.port === "5173";
-        if (isLocalHost || isLanDev) return callback(null, true);
+        const isTryCloudflareDev =
+          !isProd && (u.hostname.endsWith(".trycloudflare.com") || u.hostname === "trycloudflare.com");
+        if (isLocalHost || isLanDev || isTryCloudflareDev) return callback(null, true);
       } catch {}
       return callback(new Error("Not allowed by CORS"));
     },

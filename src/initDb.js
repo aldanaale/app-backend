@@ -85,6 +85,23 @@ async function ensureSchema() {
     });
   }
 
+ 
+  const hasRefresh = await db.schema.hasTable("refresh_tokens");
+  if (!hasRefresh) {
+    await db.schema.createTable("refresh_tokens", (t) => {
+      t.increments("id").primary();
+      t
+        .integer("user_id")
+        .references("id")
+        .inTable("users")
+        .onDelete("CASCADE");
+      t.string("jti").notNullable().unique();
+      t.boolean("revoked").defaultTo(false);
+      t.timestamp("expires_at").notNullable();
+      t.timestamp("created_at").defaultTo(db.fn.now());
+    });
+  }
+
   // Ensure uploads table and columns
   const hasUploads = await db.schema.hasTable("uploads");
   if (!hasUploads) {

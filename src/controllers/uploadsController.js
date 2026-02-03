@@ -76,15 +76,28 @@ const XLSX = require("xlsx");
       const sheet = wb.Sheets[shName];
       const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
       const items = [];
+      let route = { origin: null, destination: null, distance: null };
       for (const r of rows) {
         const name = r.nombre || r.name || r.item || r.producto || "";
         const qty = Number(r.cantidad ?? r.quantity ?? r.qty ?? r.unidades ?? r.cant ?? r["cant."]);
         if (name && !isNaN(qty)) items.push({ name: String(name), quantity: qty });
+        const o = r.origen ?? r.origin ?? r.desde ?? r.from ?? "";
+        const d = r.destino ?? r.destination ?? r.hasta ?? r.to ?? "";
+        const distRaw = r.distancia ?? r.distance ?? r.km ?? r.kilometros ?? r.kilometers ?? null;
+        const distNum = distRaw !== null ? Number(distRaw) : null;
+        if ((typeof o === "string" && o.trim()) || (typeof d === "string" && d.trim()) || (distNum !== null && !Number.isNaN(distNum))) {
+          if (typeof o === "string" && o.trim()) route.origin = String(o).trim();
+          if (typeof d === "string" && d.trim()) route.destination = String(d).trim();
+          if (distNum !== null && !Number.isNaN(distNum)) route.distance = distNum;
+        }
       }
       if (items.length) {
         tags.push("inventario_valido");
         summary = `Inventario Excel con ${items.length} ítems detectados.`;
         flags.inventory_items = items;
+        if (route.origin || route.destination || route.distance !== null) {
+          flags.route = route;
+        }
       } else {
         flags.inventory_items = [];
       }
@@ -253,4 +266,111 @@ const XLSX = require("xlsx");
     }
   };
 
-  module.exports = { create, list, download, insights, reanalyze };
+  const createQuoteFromUpload = async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+      const row = await db("uploads").where({ id }).first();
+      if (!row || row.user_id !== userId) {
+        return res.status(404).json({ error: "Archivo no encontrado." });
+      }
+      const bodyOrigin = (req.body && typeof req.body.origin === "string" && req.body.origin.trim()) ? req.body.origin.trim() : null;
+      const bodyDestination = (req.body && typeof req.body.destination === "string" && req.body.destination.trim()) ? req.body.destination.trim() : null;
+      let bodyDistance = null;
+      if (req.body && (typeof req.body.distance === "number" || typeof req.body.distance === "string")) {
+        const d = Number(req.body.distance);
+        if (!Number.isNaN(d) && d >= 0) bodyDistance = d;
+      }
+      const estimateDistance = (o, d) => {
+        if (!o || !d) return null;
+        if (o === d) return 0;
+        const seed = o.length + d.length;
+        return 5 + ((seed * 7) % 40);
+      };
+      const parseMaybeJson = (val, fallback) => {
+        if (!val && val !== 0) return fallback;
+        if (typeof val === "string") {
+          try {
+            return JSON.parse(val);
+          } catch {
+            return fallback;
+          }
+        }
+        return val;
+      };
+      let flags = parseMaybeJson(row.ai_flags, {});
+      if (!flags || typeof flags !== "object") flags = {};
+      let items = Array.isArray(flags.inventory_items)
+        ? flags.inventory_items
+        : [];
+      if (!items.length) {
+        const i2 = basicAnalyze(row);
+        flags = i2.flags || {};
+        items = Array.isArray(flags.inventory_items)
+          ? flags.inventory_items
+          : [];
+      }
+      if (!items.length) {
+        return res.status(400).json({ error: "No se detectó inventario en el archivo." });
+      }
+      const loads = items
+        .filter((it) => it && typeof it.name === "string")
+        .map((it) => ({
+          description: String(it.name),
+          blocks: Math.max(1, Number(it.quantity || 1)),
+        }));
+      const totalBlocks = loads.reduce((s, l) => s + l.blocks, 0);
+      const recommend = (tb) => {
+        if (tb <= 36) return "S";
+        if (tb <= 64) return "M";
+        if (tb <= 100) return "L";
+        if (tb <= 144) return "XL";
+        return null;
+      };
+      const recommendedType = recommend(totalBlocks);
+      let truckId = null;
+      if (recommendedType) {
+        const t = await db("trucks")
+          .where({ type: recommendedType })
+          .andWhere("capacity", ">=", totalBlocks)
+          .orderBy("capacity", "asc")
+          .first();
+        if (t) truckId = t.id;
+      }
+      const suggestedRoute = flags && flags.route ? flags.route : null;
+      const useOrigin = bodyOrigin ?? (suggestedRoute && typeof suggestedRoute.origin === "string" ? suggestedRoute.origin : null);
+      const useDestination = bodyDestination ?? (suggestedRoute && typeof suggestedRoute.destination === "string" ? suggestedRoute.destination : null);
+      const useDistance = bodyDistance !== null && bodyDistance !== undefined
+        ? bodyDistance
+        : (suggestedRoute && typeof suggestedRoute.distance === "number" ? suggestedRoute.distance : estimateDistance(useOrigin, useDestination));
+      const [quote] = await db("quotes")
+        .insert({
+          user_id: userId,
+          customer_name: row.title || "Inventario",
+          truck_id: truckId || null,
+          origin: useOrigin,
+          destination: useDestination,
+          distance: useDistance,
+          total_blocks: totalBlocks,
+          status: "En Proceso",
+        })
+        .returning("*");
+      for (const l of loads) {
+        await db("loads").insert({
+          quote_id: quote.id,
+          description: l.description,
+          blocks: l.blocks,
+        });
+      }
+      res.status(201).json({
+        quote_id: quote.id,
+        recommended_truck_type: recommendedType,
+        assigned_truck_id: truckId,
+        total_blocks: totalBlocks,
+      });
+    } catch (e) {
+      res.status(500).json({ error: "Error creando cotización desde upload." });
+    }
+  };
+ 
+  module.exports = { create, list, download, insights, reanalyze, createQuoteFromUpload };

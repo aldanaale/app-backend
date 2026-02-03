@@ -1,8 +1,5 @@
 require("dotenv").config();
-const knex = require("knex")({
-  client: "pg",
-  connection: process.env.DATABASE_URL,
-});
+const knex = require("../src/db");
 const fetchFn = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
 

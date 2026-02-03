@@ -105,8 +105,33 @@ const validateLoad = (req, res, next) => {
   next();
 };
 
+const validateClient = (req, res, next) => {
+  const { name, email, phone, status } = req.body;
+  if (!name || typeof name !== "string") {
+    return res.status(400).json({ error: "El nombre es obligatorio." });
+  }
+  if (typeof name === "string" && (name.length < 2 || name.length > 80)) {
+    return res.status(400).json({ error: "El nombre debe tener 2 a 80 caracteres." });
+  }
+  if (!email || typeof email !== "string") {
+    return res.status(400).json({ error: "El email es obligatorio." });
+  }
+  const emailRegex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ error: "Formato de email inválido." });
+  }
+  if (phone && typeof phone !== "string") {
+    return res.status(400).json({ error: "El teléfono debe ser texto." });
+  }
+  if (status && !["Activo", "Inactivo"].includes(status)) {
+    return res.status(400).json({ error: "Estado inválido." });
+  }
+  next();
+};
+
 module.exports = {
   validateTruck,
   validateQuote,
   validateLoad,
+  validateClient,
 };

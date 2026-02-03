@@ -1,4 +1,4 @@
-require("dotenv").config();
+require("dotenv").config({ override: true });
 const express = require("express");
 const cors = require("cors");
 const authRoutes = require("./routes/authRoutes");
@@ -172,6 +172,7 @@ app.use((req, res, next) => {
 app.use("/auth", authRoutes);
 app.use("/trucks", trucksRoutes);
 app.use("/quotes", quotesRoutes);
+ 
 app.use("/ai", aiRoutes);
 app.use("/admin", adminRoutes);
 app.use("/uploads", uploadsRoutes);
@@ -189,7 +190,7 @@ app.get("/ai/assist", (req, res) => {
 
 // Root endpoint for health check
 app.get("/", (req, res) => {
-  res.send("API de Mudanza App funcionando.");
+  res.json({ ok: true });
 });
 
 app.get("/healthz", (req, res) => {

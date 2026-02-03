@@ -61,6 +61,23 @@ async function run() {
       console.error("Insights not as expected");
       process.exit(1);
     }
+    const mk = await fetchFn(`${base}/uploads/${id}/quote`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const mkJson = await mk.json();
+    if (mk.status !== 201 || !mkJson.quote_id) {
+      console.error("Quote creation from upload failed:", mk.status, mkJson);
+      process.exit(1);
+    }
+    const qget = await fetchFn(`${base}/quotes/${mkJson.quote_id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const qj = await qget.json();
+    if (qget.status !== 200 || !Array.isArray(qj.loads) || qj.total_blocks <= 0) {
+      console.error("Quote data invalid:", qget.status, qj);
+      process.exit(1);
+    }
     console.log("Upload integration test: OK");
   } catch (e) {
     console.error("Test error:", e && e.message ? e.message : String(e));

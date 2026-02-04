@@ -165,10 +165,8 @@ module.exports = {
         .where({ id: rec.id })
         .update({ revoked: true });
       const newJti = crypto.randomUUID();
-      const currentUser = await db("users").where({ id: payload.id }).first();
-      const currentRole = currentUser?.role || payload.role;
       const newRefresh = jwt.sign(
-        { id: payload.id, email: payload.email, role: currentRole },
+        { id: payload.id, email: payload.email, role: payload.role },
         JWT_REFRESH_SECRET,
         { expiresIn: "7d", jwtid: newJti },
       );
@@ -179,7 +177,7 @@ module.exports = {
         expires_at: expiresAt,
       });
       const newToken = jwt.sign(
-        { id: payload.id, email: payload.email, role: currentRole },
+        { id: payload.id, email: payload.email, role: payload.role },
         JWT_SECRET,
         { expiresIn: "1h" },
       );

@@ -7,7 +7,7 @@ async function run() {
     const loginRes = await fetchFn("http://localhost:3000/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: "ok@ejemplo.com", password: "123456" }),
+      body: JSON.stringify({ email: "ok2@ejemplo.com", password: "Abcdef1!" }),
     });
     const login = await loginRes.json();
     const token = login.token;

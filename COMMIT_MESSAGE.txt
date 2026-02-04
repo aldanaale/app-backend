@@ -1,0 +1,12 @@
+feat(backend): API Express+Knex con auth, admin y uploads
+
+Incluye:
+- Entradas y rutas: /auth, /quotes, /trucks, /ai, /uploads, /admin
+- Autenticación JWT con refresh y rotación segura
+- CRUD de cotizaciones y cargas con validaciones de capacidad
+- Panel admin: gestión de usuarios, cotizaciones y descargas de uploads
+- Esquema DB asegurado vía initDb y scripts de creación
+- CORS ajustado para orígenes de desarrollo y Quick Tunnels
+- Scripts auxiliares: crear admin y validar login/admin endpoints
+
+Co-authored-by: aldanaale <alejandro.aldan89@gmail.com>

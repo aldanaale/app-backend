@@ -7,8 +7,8 @@ async function run() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        email: "ok@ejemplo.com",
-        password: "123456",
+        email: "ok2@ejemplo.com",
+        password: "Abcdef1!",
         name: "Ok",
       }),
     });

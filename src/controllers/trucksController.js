@@ -2,13 +2,8 @@ const db = require("../db");
 
 const getAllTrucks = async (req, res) => {
   try {
-    const { page = 1, pageSize = 20, type } = req.query;
-    const p = Math.max(1, parseInt(page, 10) || 1);
-    const ps = Math.min(100, Math.max(1, parseInt(pageSize, 10) || 20));
-    let q = db("trucks").select("*");
-    if (type) q = q.where({ type });
-    const items = await q.limit(ps).offset((p - 1) * ps);
-    res.json({ items, page: p, pageSize: ps });
+    const trucks = await db("trucks").select("*");
+    res.json(trucks);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error al obtener camiones." });
